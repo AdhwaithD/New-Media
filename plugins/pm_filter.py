@@ -157,13 +157,13 @@ async def group(client, message):
             buttons.append(
                 [InlineKeyboardButton(text="📜 Pages 1/1",callback_data="pages")]
             )
-            poster=None
-            if API_KEY:
-                poster=await get_poster(search)
-            if poster:
-                await message.reply_photo(photo=poster, caption=result_txt, reply_markup=InlineKeyboardMarkup(buttons))
-            else:
-                await message.reply_text(result_txt, reply_markup=InlineKeyboardMarkup(buttons))
+            imdb=await get_poster(search)
+        if imdb and imdb.get('poster'):
+            await message.reply_photo(photo=imdb.get('poster'), caption=f"<b>🎬 Title</b>: <a href={imdb['url']}>{imdb.get('title')}</a>\n<b>🎭 Genres</b>: {imdb.get('genres')}\n<b>📆 𝖱𝖾𝗅𝖾𝖺𝗌𝖾</b>: <a href={imdb['url']}/releaseinfo>{imdb.get('year')}</a>\n<b>🌟 Rating</b>: (<a href={imdb['url']}/ratings>{imdb.get('rating')}</a> /10) \n<b>🗳️ Votes</b>: {imdb.get('votes')}</a>\n<b>🌏 Country</b>: {imdb.get('country')}\n<b>🗣️ Request</b>: {message.from_user.mention}\n<b>🖋 StoryLine</b>: <code>{imdb.get('plot')} </code>", reply_markup=InlineKeyboardMarkup(buttons))
+        elif imdb:
+            await message.reply_text(f"<b>🔰Title</b>: <a href={imdb['url']}>{imdb.get('title')}</a>\n<b>🎭 Genres</b>: {imdb.get('genres')}\n📆<b> 𝖱𝖾𝗅𝖾𝖺𝗌𝖾<\b>: <a href={imdb['url']}/releaseinfo>{imdb.get('year')}</a> \n<b>🌟 Rating</b>: (<a href={imdb['url']}/ratings>{imdb.get('rating')}</a> /10)\n<b>🗳️Votes</b>: {imdb.get('votes')}</a>\n<b>🌏 Country</b>: {imdb.get('country')}\n<b>🗣️ Request</b>: {message.from_user.mention}</b>\n<b>🖋 StoryLine</b>: <code>{imdb.get('plot')} </code>", reply_markup=InlineKeyboardMarkup(buttons))
+        else:
+            await message.reply_text(f"<b>Here is What I Found In My Database For Your Query {search} ‌‌‌‌‎ </b>", reply_markup=InlineKeyboardMarkup(buttons))
             return
 
         data = BUTTONS[keyword]
@@ -175,15 +175,68 @@ async def group(client, message):
         buttons.append(
             [InlineKeyboardButton(text=f"📜 Pages 1/{data['total']}",callback_data="pages")]
         )
-        poster=None
-        if API_KEY:
-            poster=await get_poster(search)
-        if poster:
-            await message.reply_photo(photo=poster, caption=result_txt, reply_markup=InlineKeyboardMarkup(buttons))
-        else:
-            await message.reply_text(result_txt, reply_markup=InlineKeyboardMarkup(buttons))
+    imdb = await get_poster(search) if IMDB else None
+    if imdb:
+        cap = IMDB_TEMPLATE.format(
+            query = search,
+            title = imdb['title'],
+            votes = imdb['votes'],
+            aka = imdb["aka"],
+            seasons = imdb["seasons"],
+            box_office = imdb['box_office'],
+            localized_title = imdb['localized_title'],
+            kind = imdb['kind'],
+            imdb_id = imdb["imdb_id"],
+            cast = imdb["cast"],
+            runtime = imdb["runtime"],
+            countries = imdb["countries"],
+            certificates = imdb["certificates"],
+            languages = imdb["languages"],
+            director = imdb["director"],
+            writer = imdb["writer"],
+            producer = imdb["producer"],
+            composer = imdb["composer"],
+            cinematographer = imdb["cinematographer"],
+            music_team = imdb["music_team"],
+            distributors = imdb["distributors"],
+            release_date = imdb['release_date'],
+            year = imdb['year'],
+            genres = imdb['genres'],
+            poster = imdb['poster'],
+            plot = imdb['plot'],
+            rating = imdb['rating'],
+            url = imdb['url']
+        )
+    else:
+        cap = f"<b>🎬 Title:</b> {search}\n\n<b>👥 Requested by: {message.from_user.mention}</b>\n<b>© Powered by: <a href='https://t.me/+y53tWFUw6Q43NzE9'>{message.chat.title}</a></b>\n\n<b>✍️ Note:</b> <s>This message will be Auto-deleted after 5 minutes to avoid copyright issues.</s>"
+    if imdb and imdb.get('poster'):
+        try:
+            hehe = await message.reply_photo(photo=imdb.get('poster'), caption=cap, reply_markup=InlineKeyboardMarkup(buttons))
+            await asyncio.sleep(300)
+            await hehe.delete()
+            await message.delete()
+        except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
+            pic = imdb.get('poster')
+            poster = pic.replace('.jpg', "._V1_UX360.jpg")
+            hmm = await message.reply_photo(photo=poster, caption=cap, reply_markup=InlineKeyboardMarkup(buttons))
+            await asyncio.sleep(300)
+            await hmm.delete()
+            await message.delete()
+        except Exception as e:
+            logger.exception(e)
+            fek = await message.reply_photo(photo="https://telegra.ph/file/82b5bbbab6d5e5593b6b2.jpg", caption=cap, reply_markup=InlineKeyboardMarkup(buttons))
+            await asyncio.sleep(300)
+            await fek.delete()
+            await msg.delete()
+    else:
+        fuk = await message.reply_photo(photo="https://telegra.ph/file/8b42f6caf6ef5fd76766f.jpg", caption=cap, reply_markup=InlineKeyboardMarkup(buttons))
+        await asyncio.sleep(300)
+        await fuk.delete()
+        await msg.delete()
+    if spoll:
+        await msg.message.delete()   
 
-    
+
 def get_size(size):
     """Get size in readable format"""
 
